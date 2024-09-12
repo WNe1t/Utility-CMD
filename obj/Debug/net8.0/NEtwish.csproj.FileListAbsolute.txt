@@ -1,0 +1,14 @@
+/home/na1t/Desktop/Project/NEtwish/bin/Debug/net8.0/NEtwish
+/home/na1t/Desktop/Project/NEtwish/bin/Debug/net8.0/NEtwish.deps.json
+/home/na1t/Desktop/Project/NEtwish/bin/Debug/net8.0/NEtwish.runtimeconfig.json
+/home/na1t/Desktop/Project/NEtwish/bin/Debug/net8.0/NEtwish.dll
+/home/na1t/Desktop/Project/NEtwish/bin/Debug/net8.0/NEtwish.pdb
+/home/na1t/Desktop/Project/NEtwish/obj/Debug/net8.0/NEtwish.GeneratedMSBuildEditorConfig.editorconfig
+/home/na1t/Desktop/Project/NEtwish/obj/Debug/net8.0/NEtwish.AssemblyInfoInputs.cache
+/home/na1t/Desktop/Project/NEtwish/obj/Debug/net8.0/NEtwish.AssemblyInfo.cs
+/home/na1t/Desktop/Project/NEtwish/obj/Debug/net8.0/NEtwish.csproj.CoreCompileInputs.cache
+/home/na1t/Desktop/Project/NEtwish/obj/Debug/net8.0/NEtwish.dll
+/home/na1t/Desktop/Project/NEtwish/obj/Debug/net8.0/refint/NEtwish.dll
+/home/na1t/Desktop/Project/NEtwish/obj/Debug/net8.0/NEtwish.pdb
+/home/na1t/Desktop/Project/NEtwish/obj/Debug/net8.0/NEtwish.genruntimeconfig.cache
+/home/na1t/Desktop/Project/NEtwish/obj/Debug/net8.0/ref/NEtwish.dll
