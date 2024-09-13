@@ -2,6 +2,8 @@ using System;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 
@@ -13,11 +15,9 @@ namespace HelloWorld
         {
             NameLocalHost commands = new NameLocalHost(); // Даём область памяти на наш класс
             commands.LocalName(); // Выводим Имя локального хоста
-            
             commands.LocalIpAdress(); // Выводим Маску сети и Адрес сети
+            
 
-            ScanByPort scanner = new ScanByPort();
-            scanner.GetScanByPort("172.29.13.0", "80,443,631,110");
         }
     }
 
@@ -70,9 +70,13 @@ namespace HelloWorld
                     IPAddress networkAddress = new IPAddress(networkAddressBytes);
 
                     if (IsPrivateIP(address))
-                        Console.WriteLine($"{address} ; Маска сети: {new IPAddress(subnetMaskBytes)} ; Адрес сети: {networkAddress}");
-                    else
-                        Console.WriteLine($"{address} ; Маска сети: {new IPAddress(subnetMaskBytes)} ; Адрес сети: {networkAddress}");
+                        Console.WriteLine($"\n{address} ; Маска сети: {new IPAddress(subnetMaskBytes)} ; Адрес сети: {networkAddress}");
+                    else {
+                        Console.WriteLine($"\n{address} ; Маска сети: {new IPAddress(subnetMaskBytes)} ; Адрес сети: {networkAddress}");
+                    }
+                    
+                    ScanByPort scanner = new ScanByPort();
+                    scanner.GetScanByPort(address);
                 }    
             }
         }
@@ -87,44 +91,60 @@ namespace HelloWorld
         }
     }
 
-    class ScanByPort : NameLocalHost
+    class ScanByPort
     {
-        public void GetScanByPort(string ipAddress, string ports)
+        public void GetScanByPort( IPAddress ipAddress, int startPort = 79, int endPort = 50000) //Не обязательные порты, но можно вручную настроить проверку
+    {
+        List<int> listOpenPort = new List<int>();
+        for (int port = startPort; port <= endPort; port++) //цикл с начальной точки до конечной заданной у меня 79 и 50000
         {
-            
-            IPAddress address;
-
-            if (!IPAddress.TryParse(ipAddress, out address)) {
-                Console.WriteLine($"Неправильный формат IP-адреса. ваш йпи {ipAddress} правильно так:");
-                return; 
-            }
-            string[] portArray = ports.Split(',');
-
-            foreach (string port in portArray) {
-                if (int.TryParse(port.Trim(), out int portNumber))
+            if (IsPortOpen(ipAddress, port)) //проверка функцией
+            {
+                if(port != port)
                 {
-                    if (IsPortOpen(address, portNumber))
-                        Console.WriteLine($"Порт {portNumber} открыт.");
-                    else
-                        Console.WriteLine($"Порт {portNumber} закрыт.");
+                    listOpenPort.Add(port);
                 }
-                else
-                    Console.WriteLine($"Неправильный формат порта: {port}");
+                foreach (var itemPort in listOpenPort)
+                {
+                    Console.WriteLine($"{itemPort} открытый порт");
+                }
+            }
+            else if(port == 80 || port == 554 || port == 8000 || port == 8200)
+            {
+                // можно вписать для вывода закрытых портов
             }
         }
-
-        private bool IsPortOpen(IPAddress address, int port)
+        Console.WriteLine("Вывести списки? Y/N");
+        string listOut = null;
+        listOut = Console.ReadLine();
+        if(listOut == "Y")
         {
-            using (TcpClient tcpClient = new TcpClient())
+            foreach (var itemPort in listOpenPort)
             {
-                try {
-                    tcpClient.Connect(address, port);
-                    return true;
-                }
-                catch (SocketException) {
-                    return false;
-                }
+                Console.WriteLine($"{itemPort} открытый порт");
+            }
+        }
+        else
+        {
+        
+        }
+    }
+
+    private bool IsPortOpen(IPAddress address, int port)
+    {
+        using (TcpClient tcpClient = new TcpClient()) //для подключения, отправки и получения потоковых данных по сети в синхронном режиме блокировки
+        {
+            try //Обработка исключений конструкция try...catch...finally
+            {
+                tcpClient.Connect(address, port); //Connect(IPAddress, Int32) Подключает клиента к удаленному TCP-узлу, используя указанный IP-адрес и номер порта.
+                return true;
+            }
+            catch (SocketException) //Конструктор без параметров для свойства ошибки ОС
+            {
+                return false;
             }
         }
     }
+    }
+    
 }
