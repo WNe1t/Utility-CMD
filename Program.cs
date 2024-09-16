@@ -10,42 +10,50 @@ namespace HelloWorld
     {
         static void Main(string[] args)
         {
-            NameLocalHost localHost = new NameLocalHost();
-            localHost.LocalName();
+            while(true){
 
+            
+            Console.Write("Введите команду: ");
+            string command = Console.ReadLine();
+            NameLocalHost localHost = new NameLocalHost(); // Даём область памяти на наш класс
+            localHost.LocalName(command); // Выводим Имя локального хоста
             ApiMaskAddress apiMaskAddress = new ApiMaskAddress();
-            apiMaskAddress.LocalIpAdress();
-
+            apiMaskAddress.LocalIpAdress(command); // Выводим Маску сети и Адрес сети
             AddressNetwork addressNetwork = new AddressNetwork();
-
             ScanByPort scanByPort = new ScanByPort();
+            }
         }
     }
 
     class NameLocalHost
     {
-        public void LocalName()
+        public void LocalName(string command)
         {
-            string host = Dns.GetHostName();
+            if (command == "localname")
+            {
+            string host = Dns.GetHostName(); // Записывается в переменную host, получаем имя хоста локального компьютера.
             Console.WriteLine(host);
+            }
         }
     }
 
     class ApiMaskAddress : NameLocalHost
     {
-        public void LocalIpAdress()
+        public void LocalIpAdress(string command)
         {
-            string host = Dns.GetHostName();
-            IPAddress[] addresses = Dns.GetHostAddresses(host);
+            if(command == "ipadress")
+            {
+            string host = Dns.GetHostName(); // Записывается в переменную host, получаем имя хоста локального компьютера.
+            IPAddress[] addresses = Dns.GetHostAddresses(host); // Dns.GetHostAddresses - возвращает IP-адреса для указанного узла
 
             foreach (IPAddress address in addresses)
             {
                 if (!IPAddress.IsLoopback(address))
                 {
-                    Console.WriteLine($"IP Address: {address}");
                     AddressNetwork addressNetwork = new AddressNetwork();
                     addressNetwork.ProcessIpAddress(address);
                 }
+            }
             }
         }
     }
@@ -58,7 +66,7 @@ namespace HelloWorld
 
             foreach (NetworkInterface @interface in interfaces)
             {
-                if (@interface.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
+                if (@interface.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue; //Проверка типа сетевого интерфейса
 
                 IPInterfaceProperties ipProps = @interface.GetIPProperties();
                 UnicastIPAddressInformationCollection unicastIPInfoCol = ipProps.UnicastAddresses;
@@ -73,16 +81,16 @@ namespace HelloWorld
                 if (unicastIPInfo.Address.Equals(address))
                 {
                     byte[] subnetMaskBytes = unicastIPInfo.IPv4Mask.GetAddressBytes();
-                    byte[] addressBytes = address.GetAddressBytes();
-                    int subnetMask = BitConverter.ToInt32(subnetMaskBytes, 0);
+                    byte[] addressBytes = address.GetAddressBytes(); // Получаем байты из address
+                    int subnetMask = BitConverter.ToInt32(subnetMaskBytes, 0); // Преобразуем байты в int32
 
-                    byte[] networkAddressBytes = new byte[4];
+                    byte[] networkAddressBytes = new byte[4]; 
                     for (int i = 0; i < 4; i++)
                     {
-                        networkAddressBytes[i] = (byte)(addressBytes[i] & subnetMaskBytes[i]);
+                        networkAddressBytes[i] = (byte)(addressBytes[i] & subnetMaskBytes[i]); // Логическим И сравнивая байты
                     }
 
-                    IPAddress networkAddress = new IPAddress(networkAddressBytes);
+                    IPAddress networkAddress = new IPAddress(networkAddressBytes); 
 
                     if (IsPrivateIP(address))
                         Console.WriteLine($"\n{address} ; Маска сети: {new IPAddress(subnetMaskBytes)} ; Адрес сети: {networkAddress}");
@@ -97,8 +105,8 @@ namespace HelloWorld
 
         private bool IsPrivateIP(IPAddress address)
         {
-            byte[] bytes = address.GetAddressBytes();
-            int firstOctet = BitConverter.ToInt32(bytes, 0);
+            byte[] bytes = address.GetAddressBytes(); // Создаём одномерный массив
+            int firstOctet = BitConverter.ToInt32(bytes, 0); // Конвертируем типы байты в инт
             if (firstOctet == 10) return true;
             if (firstOctet == 172 && firstOctet >= 16 && firstOctet <= 31) return true;
             if (firstOctet == 192 && firstOctet == 168) return true;
@@ -108,36 +116,36 @@ namespace HelloWorld
 
     class ScanByPort
     {
-        public void GetScanByPort(IPAddress ipAddress, int startPort = 80, int endPort = 100)
+        public void GetScanByPort(IPAddress ipAddress,string command = null, int startPort = 80, int endPort = 8080) //Не обязательные порты, но можно вручную настроить проверку
         {
-            List<int> listOpenPort = new List<int>();
-            for (int port = startPort; port <= endPort; port++)
-            {
-                if (IsPortOpen(ipAddress, port))
+                List<int> listOpenPort = new List<int>();
+                for (int port = startPort; port <= endPort; port++) //цикл с начальной точки до конечной заданной у меня 79 и 50000
                 {
-                    listOpenPort.Add(port);
-                    foreach (var itemPort in listOpenPort)
+                    if (IsPortOpen(ipAddress, port)) //проверка функцией
                     {
-                        Console.WriteLine($"{itemPort} открытый порт");
+                        listOpenPort.Add(port);
+                        foreach (var itemPort in listOpenPort)
+                        {
+                            Console.WriteLine($"{itemPort} открытый порт");
+                        }
+                    }
+                    else if (port == 80 || port == 554 || port == 8000 || port == 8200)
+                    {
+                        // можно вписать для вывода закрытых портов
                     }
                 }
-                else if (port == 80 || port == 554 || port == 8000 || port == 8200)
-                {
-                    // можно вписать для вывода закрытых портов
-                }
-            }
         }
 
         private bool IsPortOpen(IPAddress address, int port)
         {
-            using (TcpClient tcpClient = new TcpClient())
+            using (TcpClient tcpClient = new TcpClient()) //для подключения, отправки и получения потоковых данных по сети в синхронном режиме блокировки
             {
-                try
+                try //Обработка исключений конструкция try...catch...finally
                 {
-                    tcpClient.Connect(address, port);
+                    tcpClient.Connect(address, port); //Connect(IPAddress, Int32) Подключает клиента к удаленному TCP-узлу, используя указанный IP-адрес и номер порта.
                     return true;
                 }
-                catch (SocketException)
+                catch (SocketException) //Конструктор без параметров для свойства ошибки ОС
                 {
                     return false;
                 }
