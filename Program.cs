@@ -16,18 +16,24 @@ namespace HelloWorld
             Console.Write("Введите команду: ");
             string command = Console.ReadLine();
             NameLocalHost localHost = new NameLocalHost(); // Даём область памяти на наш класс
-            localHost.LocalName(command); // Выводим Имя локального хоста
+            localHost.GetLocalName(command); // Выводим Имя локального хоста
             ApiMaskAddress apiMaskAddress = new ApiMaskAddress();
             apiMaskAddress.LocalIpAdress(command); // Выводим Маску сети и Адрес сети
             AddressNetwork addressNetwork = new AddressNetwork();
             ScanByPort scanByPort = new ScanByPort();
+            if(command == "exit")
+            {
+                break;
             }
+            }
+
         }
     }
 
+
     class NameLocalHost
     {
-        public void LocalName(string command)
+        public void GetLocalName(string command)
         {
             if (command == "localname")
             {
@@ -35,6 +41,15 @@ namespace HelloWorld
             Console.WriteLine(host);
             }
         }
+
+        // public void HelpCommand()
+        // {
+            
+        //     foreach(string item in )
+        //     {
+
+        //     }
+        // }
     }
 
     class ApiMaskAddress : NameLocalHost
@@ -62,35 +77,35 @@ namespace HelloWorld
     {
         public void ProcessIpAddress(IPAddress address)
         {
-            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces(); //получение всех сетевых интерфейсов
 
-            foreach (NetworkInterface @interface in interfaces)
+            foreach (NetworkInterface @interface in interfaces) //Перебор интерфейсов
             {
-                if (@interface.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue; //Проверка типа сетевого интерфейса
+                if (@interface.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue; //проверка типа сетевого интерфейса
 
-                IPInterfaceProperties ipProps = @interface.GetIPProperties();
-                UnicastIPAddressInformationCollection unicastIPInfoCol = ipProps.UnicastAddresses;
-                IpAddressesMask(unicastIPInfoCol, address);
+                IPInterfaceProperties ipProps = @interface.GetIPProperties(); //Получение свойств IP-адресов интерфейса
+                UnicastIPAddressInformationCollection UnicastIPA = ipProps.UnicastAddresses;
+                IpAddressesMask(UnicastIPA, address); //
             }
         }
 
-        private void IpAddressesMask(UnicastIPAddressInformationCollection unicastIPInfoCol, IPAddress address)
+        private void IpAddressesMask(UnicastIPAddressInformationCollection UnicastIPA, IPAddress address)
         {
-            foreach (UnicastIPAddressInformation unicastIPInfo in unicastIPInfoCol)
+            foreach (UnicastIPAddressInformation unicastIPInfo in UnicastIPA) // перебираем все уникальные IP-адреса
             {
                 if (unicastIPInfo.Address.Equals(address))
                 {
                     byte[] subnetMaskBytes = unicastIPInfo.IPv4Mask.GetAddressBytes();
-                    byte[] addressBytes = address.GetAddressBytes(); // Получаем байты из address
-                    int subnetMask = BitConverter.ToInt32(subnetMaskBytes, 0); // Преобразуем байты в int32
+                    byte[] addressBytes = address.GetAddressBytes(); // получаем байты маски подсети для текущего IP-адреса
+                    int subnetMask = BitConverter.ToInt32(subnetMaskBytes, 0); // конвертируем байты в int32 типа (инт)
 
-                    byte[] networkAddressBytes = new byte[4]; 
+                    byte[] networkAddressBytes = new byte[4]; // массив для хранения байтов сетевого адреса
                     for (int i = 0; i < 4; i++)
                     {
-                        networkAddressBytes[i] = (byte)(addressBytes[i] & subnetMaskBytes[i]); // Логическим И сравнивая байты
+                        networkAddressBytes[i] = (byte)(addressBytes[i] & subnetMaskBytes[i]); // логическое И (AND) между байтами IP-адреса и байтами маски подсети
                     }
 
-                    IPAddress networkAddress = new IPAddress(networkAddressBytes); 
+                    IPAddress networkAddress = new IPAddress(networkAddressBytes);  // создаем новый IP-адрес из полученных байтов сетевого адреса.
 
                     if (IsPrivateIP(address))
                         Console.WriteLine($"\n{address} ; Маска сети: {new IPAddress(subnetMaskBytes)} ; Адрес сети: {networkAddress}");
@@ -98,15 +113,15 @@ namespace HelloWorld
                         Console.WriteLine($"\n{address} ; Маска сети: {new IPAddress(subnetMaskBytes)} ; Адрес сети: {networkAddress}");
 
                     ScanByPort scanner = new ScanByPort();
-                    scanner.GetScanByPort(address);
+                    scanner.GetScanByPort(address); // переход к нахождению и отображения порта в консоле
                 }
             }
         }
 
-        private bool IsPrivateIP(IPAddress address)
+        private bool IsPrivateIP(IPAddress address) //Проверка если вернёт true, выполнится конструкция if
         {
             byte[] bytes = address.GetAddressBytes(); // Создаём одномерный массив
-            int firstOctet = BitConverter.ToInt32(bytes, 0); // Конвертируем типы байты в инт
+            int firstOctet = BitConverter.ToInt32(bytes, 0); // Конвертируем типы: (байты) в (инт)
             if (firstOctet == 10) return true;
             if (firstOctet == 172 && firstOctet >= 16 && firstOctet <= 31) return true;
             if (firstOctet == 192 && firstOctet == 168) return true;
@@ -140,7 +155,7 @@ namespace HelloWorld
         {
             using (TcpClient tcpClient = new TcpClient()) //для подключения, отправки и получения потоковых данных по сети в синхронном режиме блокировки
             {
-                try //Обработка исключений конструкция try...catch...finally
+                try //Обработка исключений конструкция try...catch...finally в друг связь оборвётся
                 {
                     tcpClient.Connect(address, port); //Connect(IPAddress, Int32) Подключает клиента к удаленному TCP-узлу, используя указанный IP-адрес и номер порта.
                     return true;
