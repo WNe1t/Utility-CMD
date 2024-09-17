@@ -14,7 +14,7 @@ namespace UtilityCmd
                 Console.Write("Введите команду: ");
                 string? command = Console.ReadLine();
                 ApiMaskAddress apiMaskAddress = new ApiMaskAddress();
-                string[] array = new string[4] { "help - список команд", "localname", "ipAdress", "exit" };
+                string[] array = new string[4] { "\nhelp\n", "localname", "ipAdress", "\nexit\n" };
                 switch (command)
                 {
                     case "localname":
@@ -61,7 +61,7 @@ namespace UtilityCmd
                     ipAddresses.AppendLine(ipAddressInfo);
                 }
             }
-            return ipAddresses.ToString();
+            return ipAddresses.ToString(); //возвращает строковый айпиадресс
         }
     }
 
