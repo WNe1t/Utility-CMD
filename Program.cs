@@ -14,7 +14,7 @@ namespace UtilityCmd
                 Console.Write("Введите команду: ");
                 string? command = Console.ReadLine();
                 ApiMaskAddress apiMaskAddress = new ApiMaskAddress();
-                string[] array = new string[4] { "\nhelp\n", "localname", "ipAdress", "\nexit\n" };
+                string[] mainMenu = new string[] { "\nhelp\n", "localname", "ipAdress", "\nexit\n" };
                 switch (command)
                 {
                     case "localname":
@@ -27,12 +27,13 @@ namespace UtilityCmd
                         break;
                     case "help":
                         Console.WriteLine("Список команд: ");
-                        foreach (string help in array)
+                        foreach (string help in mainMenu)
                             Console.WriteLine(help);
                         break;
                     case "exit":
                         break;
                 }
+                break;
             }
         }
     }
@@ -47,8 +48,7 @@ namespace UtilityCmd
 
         public string LocalIpAdress()
         {
-            string host = LocalName(); // Записывается в переменную host из функции LocalName
-            IPAddress[] addresses = Dns.GetHostAddresses(host); // Dns.GetHostAddresses - возвращает IP-адреса для указанного узла
+            IPAddress[] addresses = Dns.GetHostAddresses(LocalName()); // Dns.GetHostAddresses - возвращает IP-адреса для указанного узла
 
             StringBuilder ipAddresses = new StringBuilder();
 
