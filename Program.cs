@@ -15,6 +15,7 @@ namespace UtilityCmd
                 string? command = Console.ReadLine();
                 ApiMaskAddress apiMaskAddress = new ApiMaskAddress();
                 string[] mainMenu = new string[] { "\nhelp\n", "localname", "ipAdress", "\nexit\n" };
+
                 switch (command)
                 {
                     case "localname":
@@ -46,30 +47,31 @@ namespace UtilityCmd
             return host;
         }
 
-        public string LocalIpAdress()
+        internal string LocalIpAdress()
         {
             IPAddress[] addresses = Dns.GetHostAddresses(LocalName()); // Dns.GetHostAddresses - возвращает IP-адреса для указанного узла
 
             StringBuilder ipAddresses = new StringBuilder();
-
+            string ipAddressInfo = ""; // ??/?
             foreach (IPAddress address in addresses)
             {
+                CalculatingAllIpAddresses addressNetwork = new CalculatingAllIpAddresses();
                 if (!IPAddress.IsLoopback(address))
                 {
-                    AddressNetwork addressNetwork = new AddressNetwork();
-                    string ipAddressInfo = addressNetwork.ProcessIpAddress(address);
+                    ipAddressInfo = addressNetwork.interfaceIpAdress(address);
                     ipAddresses.AppendLine(ipAddressInfo);
                 }
             }
-            return ipAddresses.ToString(); //возвращает строковый айпиадресс
+            return ipAddressInfo;
         }
     }
 
-    class AddressNetwork
+    // class AN описывает вычисления айпи адресов и масок, выводом на экран
+    class CalculatingAllIpAddresses
     {
-        public string ProcessIpAddress(IPAddress address)
+        internal string interfaceIpAdress(IPAddress address)
         {
-            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces(); // ,GetAllNetworkInterfaces - возвращает интерфейсы
 
             foreach (NetworkInterface @interface in interfaces) //Перебор интерфейсов
             {
@@ -77,21 +79,20 @@ namespace UtilityCmd
 
                 IPInterfaceProperties ipProps = @interface.GetIPProperties(); //Получение свойств IP-адресов интерфейса
                 UnicastIPAddressInformationCollection UnicastIPA = ipProps.UnicastAddresses;
+
                 IpAddressesMask(UnicastIPA, address);
             }
-            return null;
+            return address.ToString();
         }
 
-        public void IpAddressesMask(UnicastIPAddressInformationCollection UnicastIPA, IPAddress address)
+        internal void IpAddressesMask(UnicastIPAddressInformationCollection UnicastIPA, IPAddress address)
         {
             foreach (UnicastIPAddressInformation unicastIPInfo in UnicastIPA) // перебираем все уникальные IP-адреса
             {
                 if (unicastIPInfo.Address.Equals(address))
                 {
-                    byte[] subnetMaskBytes = unicastIPInfo.IPv4Mask.GetAddressBytes();
-                    byte[] addressBytes = address.GetAddressBytes(); // получаем байты маски подсети для текущего IP-адреса
-                    int subnetMask = BitConverter.ToInt32(subnetMaskBytes, 0); // конвертируем байты в int32 типа (инт)
-
+                    byte[] subnetMaskBytes = unicastIPInfo.IPv4Mask.GetAddressBytes(); //GetAddressBytes() представляет наш IPAddress в виде массива байтов
+                    byte[] addressBytes = address.GetAddressBytes(); //GetAddressBytes() представляет наши маски подсети для текущего IP-адреса в виде массива байтов
                     byte[] networkAddressBytes = new byte[4]; // массив для хранения байтов сетевого адреса
                     for (int i = 0; i < 4; i++)
                     {
@@ -106,14 +107,13 @@ namespace UtilityCmd
                     {
                         Console.WriteLine($"\n{address} ; Маска сети: {new IPAddress(subnetMaskBytes)} ; Адрес сети: {networkAddress}");
                     }
-
-                    ScanPortNetwork scanner = new ScanPortNetwork();
-                    scanner.ScanPort(address); // переход к нахождению и отображения порта в консоле
                 }
             }
+            ScanningOpenClosedPorts scanner = new ScanningOpenClosedPorts();
+            scanner.PortScan(address); // переход к нахождению и отображения порта в консоле
         }
 
-        private bool IsPrivateIP(IPAddress address) //Проверка если вернёт true, выполнится конструкция if
+        private bool IsPrivateIP(IPAddress address)
         {
             byte[] bytes = address.GetAddressBytes(); // Создаём одномерный массив
             int firstOctet = BitConverter.ToInt32(bytes, 0); // Конвертируем типы: (байты) в (инт)
@@ -124,25 +124,26 @@ namespace UtilityCmd
         }
     }
 }
-class ScanPortNetwork
+class ScanningOpenClosedPorts
 {
-    public void ScanPort(IPAddress ipAddress, int startPort = 80, int endPort = 8080) //Не обязательные порты, но можно вручную настроить проверку
+    public void PortScan(IPAddress ipAddress, int startPort = 80, int endPort = 8000)
     {
         List<int> listOpenPort = new List<int>();
-        for (int port = startPort; port <= endPort; port++) //цикл с начальной точки до конечной заданной у меня 79 и 50000
+        List<int> listClosedPort = new List<int>();
+        for (int port = startPort; port <= endPort; port++)
         {
-            if (IsPortOpen(ipAddress, port)) //проверка функцией
-            {
+            if (IsPortOpen(ipAddress, port))
                 listOpenPort.Add(port);
-                foreach (var itemPort in listOpenPort)
-                {
-                    Console.WriteLine($"{itemPort} открытый порт");
-                }
-            }
-            // else if (port == 80 || port == 554 || port == 8000 || port == 8200)
-            // {
-            //     // можно вписать для вывода закрытых портов
-            // }
+            else if (port == 80 || port == 554 || port == 8000)
+                listClosedPort.Add(port);
+        }
+        foreach (var openItemPort in listOpenPort)
+        {
+            Console.WriteLine($"{openItemPort} открытый порт");
+        }
+        foreach (var closedItemPort in listClosedPort)
+        {
+            Console.WriteLine($"{closedItemPort} закрытый порт");
         }
     }
 
@@ -150,12 +151,12 @@ class ScanPortNetwork
     {
         using (TcpClient tcpClient = new TcpClient()) //для подключения, отправки и получения потоковых данных по сети в синхронном режиме блокировки
         {
-            try //Обработка исключений конструкция try...catch...finally в друг связь оборвётся
+            try //Обработка исключений конструкция try...catch...
             {
-                tcpClient.Connect(address, port); //Connect(IPAddress, Int32) Подключает клиента к удаленному TCP-узлу, используя указанный IP-адрес и номер порта.
+                tcpClient.Connect(address, port); //Connect(IPAddress, Int32) Подключает клиента к удаленному TCP-узлу, используя указанный IP-адрес и номер порта
                 return true;
             }
-            catch (SocketException) //Конструктор без параметров для свойства ошибки ОС
+            catch (SocketException)
             {
                 return false;
             }
