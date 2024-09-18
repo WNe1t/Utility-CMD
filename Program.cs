@@ -149,7 +149,8 @@ class ScanningOpenClosedPorts
 
     private bool IsPortOpen(IPAddress address, int port)
     {
-        using (TcpClient tcpClient = new TcpClient()) //для подключения, отправки и получения потоковых данных по сети в синхронном режиме блокировки
+        TcpClient tcpClient = new TcpClient();
+        using (tcpClient)//для подключения, отправки и получения потоковых данных по сети в синхронном режиме блокировки
         {
             try //Обработка исключений конструкция try...catch...
             {
